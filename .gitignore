@@ -11,3 +11,4 @@
 !data/.gitkeep
 /saved_weights/*
 !saved_weights/.gitkeep
+/.venv
