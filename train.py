@@ -10,11 +10,15 @@ from prep_data import get_prepared_data
 # import model from model.py
 from model import create_model
 
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+
 
 # TODO modify this function however you want to train the model
 def train_model(model, optimizer, criterion, X_train, y_train, X_val, y_val, training_updates=True):
 
-    num_epochs = 2000 # hint: you shouldn't need anywhere near this many epochs
+    num_epochs = 500 # hint: you shouldn't need anywhere near this many epochs
+
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', patience=10, factor=0.5, verbose=True)
 
     for epoch in range(num_epochs):
         optimizer.zero_grad()
@@ -22,12 +26,13 @@ def train_model(model, optimizer, criterion, X_train, y_train, X_val, y_val, tra
         loss = criterion(output, y_train)
         loss.backward()
         optimizer.step()
-        if training_updates and epoch % (num_epochs // 10) == 0: # print training and validation loss 10 times across training
+        if training_updates and epoch % (num_epochs // 10) == 0:
             with torch.no_grad():
                 output = model(X_val)
                 val_loss = criterion(output, y_val)
                 print(f"Epoch {epoch} | Training Loss: {loss.item()}, Validation Loss: {val_loss.item()}")
-
+        
+        scheduler.step(val_loss)
     return model
 
 

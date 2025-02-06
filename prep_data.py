@@ -1,6 +1,7 @@
+from sklearn.preprocessing import StandardScaler # type: ignore
 import pandas as pd
 import numpy as np
-import torch
+import torch # type: ignore
 
 # Load dataset and return cleaned and preprocessed features and target
 # TODO: use more of the columns, preprocess them in a different way,
@@ -12,7 +13,7 @@ import torch
 
 # columns used in template: 'Released_Year', 'Certificate', 'Runtime', 'Genre' (kind of',
 # 'IMDB_Rating', 'Meta_score', 'No_of_Votes'
-def get_prepared_data(data_path="data"):
+def get_prepared_data(data_path="data/"):
 
     # Load raw data
     # this function tries to combine all .csv files in the data folder
@@ -21,13 +22,15 @@ def get_prepared_data(data_path="data"):
     # if not, you will need additional logic to join the datasets
     # do not rename the column by hand, add code before this point to rename it
     # remember: we will not manually modify your datasets, so your code must do any formatting automatically
-    data = get_raw_data(data_path)
+    data = get_raw_data(data_path) # See bottom of this file for get_raw_data()
 
     # Drop columns in text format (not used in the demo, may be useful to you)
-    data = data.drop(columns=["Poster_Link", "Series_Title", "Overview", "Director", "Star1", "Star2", "Star3", "Star4"])
+    data = data.drop(columns=["Poster_Link"])
 
-    # take only the first genre from the list of genres (you might want to do something more sophisticated)
-    data["Genre"] = data["Genre"].apply(lambda x: x.split(",")[0])
+    data["Genre1"] = data["Genre"].apply(lambda x: x.split(",")[0].strip())  # First genre
+
+    data["Genre2"] = data["Genre"].apply(lambda x: x.split(",")[1].strip() if len(x.split(",")) > 1 else "None")  # Second genre or "None"
+
 
     # convert "Gross" into a number (remove ",")
     data["Gross"] = data["Gross"].apply(lambda x: int(x.replace(",", ""))
@@ -40,8 +43,12 @@ def get_prepared_data(data_path="data"):
     features = data.drop(columns=["Gross"])
     target = data["Gross"]
 
+    features = features.apply(pd.to_numeric, errors='coerce')
+
+    features = features.dropna()
+
     # Convert to numpy arrays
-    features = np.array(features)
+    features = np.array(features, dtype=np.float32)
     target = np.array(target).reshape(-1, 1)
 
     # Convert to torch tensors
